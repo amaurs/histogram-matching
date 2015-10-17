@@ -1,19 +1,44 @@
 import numpy
+import osr
 import sys
+import gdal
 import matplotlib.pyplot as plt
 
 def main(image_path, reference_image_path): 
     get_histogram(image_path, reference_image_path)
 
 def get_histogram(image_path, reference_image_path):    
-    import gdal
-    final = numpy.zeros((5,5000,5000))
-    for band in range(1,2):
+
+    f, plots = plt.subplots(5, sharex=True, sharey=True)
+
+    print 'About to open file %s.' % image_path
+    ds = gdal.Open(image_path)
+
+    bands = ds.RasterCount
+
+    print "Bands: %d" % bands
+
+    geo_transform = ds.GetGeoTransform()
+
+    projection = osr.SpatialReference()
+    projection.ImportFromWkt(ds.GetProjectionRef())
+
+    output_file = 'out.tif'
+    width = 5000
+    height = 5000
+
+
+    driver = gdal.GetDriverByName('GTiff')
+    result_image = driver.Create(output_file, width, height, 5, gdal.GDT_Int16  )
+    result_image.SetGeoTransform(geo_transform)
+    result_image.SetProjection(projection.ExportToWkt())
+
+
+
+    for band in range(1,6):
         print 'Processing band %s.' % band
         interest_band = band
-        print 'About to open file %s.' % image_path
-        ds = gdal.Open(image_path)
-        print 'Reading data as array from file.'
+        print 'Reading band as array from file.'
         array = numpy.array(ds.GetRasterBand(interest_band).ReadAsArray()) 
         ref_ds = gdal.Open(reference_image_path)
         reference_array = numpy.array(ref_ds.GetRasterBand(interest_band).ReadAsArray())
@@ -28,16 +53,30 @@ def get_histogram(image_path, reference_image_path):
         for i in range(len(flat)):
             index = numpy.searchsorted(reference_cdf,[cdf[flat[i]]])
             result[i] = index[0]
-        final[interest_band - 1] = result.reshape((5000, 5000))
-    show_histograms(cdf, reference_cdf)
+
+        result_image.GetRasterBand(interest_band).WriteArray(result.reshape((width, height)))
+        result_image.FlushCache()
+
+        current_plot = plots[band - 1]
+        current_plot.plot(cdf, color='g')
+        current_plot.plot(reference_cdf, color='r')
+        #show_histograms(cdf, reference_cdf, 'band%d' % band)
+    plt.savefig('bands.png')
+
+def create_tiff(output_file, width, height, geo_transform, projection):
+
+
+    result.GetRasterBand(1).WriteArray( Array )
+        
+
     
-def show_histograms(original_cumulative_distribution_function, reference_cumulative_distribution_function):
+def show_histograms(original_cumulative_distribution_function, reference_cumulative_distribution_function, title):
     plt.plot(original_cumulative_distribution_function, color='g')
     plt.plot(reference_cumulative_distribution_function, color='r')
     plt.title("Histogram Matching")
     plt.xlabel("Value")
     plt.ylabel("Frequency")
-    plt.show()
+    plt.savefig(title + '.png')
 
 if __name__ == '__main__':
     print sys.argv
