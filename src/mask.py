@@ -18,7 +18,7 @@ def use_mask(original_image, mask):
     print bands
     output_file = "final_final_final.tif"
     driver = gdal.GetDriverByName('GTiff')
-    result_image = driver.Create(output_file, width, height, 5, gdal.GDT_Int16  )
+    result_image = driver.Create(output_file, width, height, bands, gdal.GDT_Int16  )
     result_image.SetGeoTransform(geo_transform)
     result_image.SetProjection(projection.ExportToWkt())
 
