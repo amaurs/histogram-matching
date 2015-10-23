@@ -4,10 +4,10 @@ import sys
 import gdal
 import matplotlib.pyplot as plt
 
-def main(image_path, reference_image_path): 
-    get_histogram(image_path, reference_image_path)
+def main(image_path, reference_image_path, output_name): 
+    get_histogram(image_path, reference_image_path, output_name)
 
-def get_histogram(image_path, reference_image_path):    
+def get_histogram(image_path, reference_image_path, output_name):    
 
     f, plots = plt.subplots(5, sharex=True, sharey=True)
 
@@ -23,7 +23,7 @@ def get_histogram(image_path, reference_image_path):
     projection = osr.SpatialReference()
     projection.ImportFromWkt(ds.GetProjectionRef())
 
-    output_file = 'out.tif'
+    output_file = output_name
     width = 5000
     height = 5000
 
@@ -80,4 +80,4 @@ def show_histograms(original_cumulative_distribution_function, reference_cumulat
 
 if __name__ == '__main__':
     print sys.argv
-    main(sys.argv[1], sys.argv[2])
+    main(sys.argv[1], sys.argv[2], sys.argv[3])
